@@ -1,0 +1,320 @@
+Các bước cắm lại firewall hỏng:
+1. cắm console và firewall mới
+2. Khởi động, kiểm tra có cần reset password root hay ko
+3. Login xóa cấu hình bằng lệnh
+delete
+admin@VC-VPHUE-FW-SRX345_01> edit 
+warning: Clustering enabled; using private edit
+warning: uncommitted changes will be discarded on exit
+Entering configuration mode
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# delete 
+This will delete the entire configuration
+Delete everything under this level? [yes,no] (no) yes 
+
+5. Đổi lại password của root để đảm bảo có khởi động lại thì có thể login bằng user root
+set system root-authentication plain-text-password
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# ...ication plain-text-password                  
+New password:
+Retype new password:
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# commit 
+node0: 
+commit complete
+
+
+5. chuyển node đúng với node đang thay thế
+set chassis cluster cluster-id 1 node 0
+
+admin@VC-VPHUE-FW-SRX345_01> set chassis cluster cluster-id 1 node 0 
+warning: A reboot is required for chassis cluster to be enabled
+
+
+6. Copy cấu hình trên con node firewall đang chạy vào con mới
+load replace terminal
+nhấn CTRL + D để 
+
+admin@VC-VPHUE-FW-SRX345_01> edit 
+warning: Clustering enabled; using private edit
+warning: uncommitted changes will be discarded on exit
+Entering configuration mode
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# load replace terminal 
+[Type ^D at a new line to end input]
+groups {             
+    node0 {
+        system {
+            host-name VC-VPHUE-FW-SRX345_01;
+        }
+    }
+    node1 {
+        system {
+            host-name VC-VPHUE-FW-SRX345_02;
+        }
+    }
+}
+
+^D
+load complete
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# 
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# commit check 
+node0: 
+configuration check succeeds
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# commit 
+node0: 
+commit complete
+
+{primary:node0}[edit]
+admin@VC-VPHUE-FW-SRX345_01# exit 
+Exiting configuration mode
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01> request system reboot 
+Reboot the system ? [yes,no] (no) yes 
+
+
+
+7. Sau khi khởi động lại kiểm tra các tham số sau đó rút nguồn 
+8. Cắm các dây mạng đúng theo thứ tự kết nối
+9. Cắm nguồn điện và theo dõi quá trình boot qua console
+10. Kiểm tra trạng thái sau khi khởi động
+show chassis cluster status
+show chassis cluster interfaces
+show security monitoring
+show security flow session summary
+monitor interface traffic
+
+nếu trạng thái như bên dưới là OK
+Cluster ID: 1
+Node   Priority Status         Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 1
+node0  100      primary        no      no       None           
+node1  10       secondary      no      no       None           
+
+Redundancy group: 1 , Failover count: 1
+node0  100      primary        yes     no       None           
+node1  10       secondary      yes     no       None   
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01> show chassis cluster interfaces 
+Control link status: Up
+
+Control interfaces: 
+    Index   Interface   Monitored-Status   Internal-SA   Security
+    0       fxp1        Up                 Disabled      Disabled  
+
+Fabric link status: Up
+
+Fabric interfaces: 
+    Name    Child-interface    Status                    Security
+                               (Physical/Monitored)
+    fab0    ge-0/0/2           Up   / Up                 Disabled   
+    fab0   
+    fab1    ge-5/0/2           Up   / Up                 Disabled   
+    fab1   
+
+Redundant-ethernet Information:     
+    Name         Status      Redundancy-group
+    reth0        Up          1                
+    reth1        Up          1                
+   
+Redundant-pseudo-interface Information:
+    Name         Status      Redundancy-group
+    lo0          Up          0                
+
+Interface Monitoring:
+    Interface         Weight    Status    Redundancy-group
+    ge-5/0/3          155       Up        1   
+    ge-5/0/4          155       Up        1   
+    ge-5/0/5          155       Up        1   
+    ge-5/0/6          155       Up        1   
+    ge-0/0/6          155       Up        1   
+    ge-0/0/5          155       Up        1   
+    ge-0/0/4          155       Up        1   
+    ge-0/0/3          155       Up        1   
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01>
+
+
+11. thử khởi động node đang hoạt động để xem hệ thống có chuyển sang mode MASTER sang node mới thay không
+
+--- JUNOS 15.1X49-D130.6 built 2018-03-04 17:25:09 UTC
+{secondary:node0}
+admin@VC-VPHUE-FW-SRX345_01> 
+
+{secondary:node0}
+admin@VC-VPHUE-FW-SRX345_01> show chan
+                                  ^
+syntax error, expecting <command>.
+admin@VC-VPHUE-FW-SRX345_01> show chassis cluster status 
+Monitor Failure codes:
+    CS  Cold Sync monitoring        FL  Fabric Connection monitoring
+    GR  GRES monitoring             HW  Hardware monitoring
+    IF  Interface monitoring        IP  IP monitoring
+    LB  Loopback monitoring         MB  Mbuf monitoring
+    NH  Nexthop monitoring          NP  NPC monitoring              
+    SP  SPU monitoring              SM  Schedule monitoring
+    CF  Config Sync monitoring      RE  Relinquish monitoring
+ 
+Cluster ID: 1
+Node   Priority Status         Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 0
+node0  100      secondary      no      no       None           
+node1  10       primary        no      no       None           
+
+Redundancy group: 1 , Failover count: 1
+node0  100      primary        yes     no       None           
+node1  10       secondary      yes     no       None           
+
+{secondary:node0}
+admin@VC-VPHUE-FW-SRX345_01> 
+Message from syslogd@VC-VPHUE-FW-SRX345_01 at Jan 17 00:08:14  ...
+VC-VPHUE-FW-SRX345_01 CMLC: Going disconnected; Routing engine chassis socket closed abruptly 
+Jan 17 00:08:15 init: advanced-anti-malware (PID 1826) terminate signal 15 sent
+Jan 17 00:08:15 init: exec_command: /usr/sbin/nstraced (PID 2436) started
+Jan 17 00:08:15 init: network-security-trace (PID 2436) started
+Jan 17 00:08:15 init: exec_command: /usr/sbin/syshmd (PID 2437) started
+Jan 17 00:08:15 init: system-health-management (PID 2437) started
+Jan 17 00:08:15 init: exec_command: /usr/sbin/smtpd (PID 2438) started
+Jan 17 00:08:15 init: simple-mail-client-service (PID 2438) started
+Jan 17 00:08:16 init: database-replication (PID 2453) started
+Jan 17 00:08:16 init: kernel-replication (PID 1818) exited with status=0 Normal Exit
+Jan 17 00:08:16 init: mib-process (PID 1815) exited with status=0 Normal Exit
+Jan 17 00:08:16 init: exec_command: /usr/sbin/mib2d (PID 2454) started
+Jan 17 00:08:16 init: mib-process (PID 2454) started
+Jan 17 00:08:16 init: chassis-control (PID 1753) exited with status=0 Normal Exit
+Jan 17 00:08:16 init: exec_command: /usr/sbin/chassisd (PID 2455) started
+Jan 17 00:08:16 init: chassis-control (PID 2455) started
+Jan 17 00:08:16 init: interface-control (PID 1752) exited with status=0 Normal Exit
+Jan 17 00:08:16 init: exec_command: /sbin/dcd (PID 2456) started
+Jan 17 00:08:16 init: interface-control (PID 2456) started
+Jan 17 00:08:45 init: security-intelligence (PID 1825) exited with status=0 Normal Exit
+Jan 17 00:08:45 init: exec_command: /usr/sbin/ipfd (PID 2511) started
+Jan 17 00:08:45 init: security-intelligence (PID 2511) started
+Jan 17 00:08:47 init: mountd-service (PID 2504) exited with status=1 
+Jan 17 00:08:47 init: mountd-service is thrashing, not restarted
+Jan 17 00:08:47 init: exec_command: /usr/sbin/cli (PID 2512) started
+Jan 17 00:08:47 init: Alarm set command: /usr/sbin/cli (PID 2512) started
+Jan 17 00:08:47 init: ntp (PID 2500) exited with status=1 
+Jan 17 00:08:47 init: ntp is thrashing, not restarted
+Jan 17 00:08:47 init: exec_command: /usr/sbin/cli (PID 2513) started
+Jan 17 00:08:47 init: Alarm set command: /usr/sbin/cli (PID 2513) started
+Jan 17 00:08:47 init: gstatd (PID 2502) exited with status=1 
+Jan 17 00:08:47 init: gstatd is thrashing, not restarted
+Jan 17 00:08:47 init: exec_command: /usr/sbin/cli (PID 2514) started
+Jan 17 00:08:47 init: Alarm set command: /usr/sbin/cli (PID 2514) started
+
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01> show chassis cluster status    
+Monitor Failure codes:
+    CS  Cold Sync monitoring        FL  Fabric Connection monitoring
+    GR  GRES monitoring             HW  Hardware monitoring
+    IF  Interface monitoring        IP  IP monitoring
+    LB  Loopback monitoring         MB  Mbuf monitoring
+    NH  Nexthop monitoring          NP  NPC monitoring              
+    SP  SPU monitoring              SM  Schedule monitoring
+    CF  Config Sync monitoring      RE  Relinquish monitoring
+ 
+Cluster ID: 1
+Node   Priority Status         Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 1
+node0  100      primary        no      no       None           
+node1  0        lost           n/a     n/a      n/a            
+
+Redundancy group: 1 , Failover count: 1
+node0  100      primary        yes     no       None           
+node1  0        lost           n/a     n/a      n/a            
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01> show chassis cluster status    
+Monitor Failure codes:
+    CS  Cold Sync monitoring        FL  Fabric Connection monitoring
+    GR  GRES monitoring             HW  Hardware monitoring
+    IF  Interface monitoring        IP  IP monitoring
+    LB  Loopback monitoring         MB  Mbuf monitoring
+    NH  Nexthop monitoring          NP  NPC monitoring              
+    SP  SPU monitoring              SM  Schedule monitoring
+    CF  Config Sync monitoring      RE  Relinquish monitoring
+ 
+Cluster ID: 1
+Node   Priority Status         Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 1
+node0  100      primary        no      no       None           
+node1  0        lost           n/a     n/a      n/a            
+
+Redundancy group: 1 , Failover count: 1
+node0  100      primary        yes     no       None           
+node1  0        lost           n/a     n/a      n/a            
+
+{primary:node0}
+admin@VC-VPHUE-FW-SRX345_01> show chassis cluster status    
+Monitor Failure codes:
+    CS  Cold Sync monitoring        FL  Fabric Connection monitoring
+    GR  GRES monitoring             HW  Hardware monitoring
+    IF  Interface monitoring        IP  IP monitoring
+    LB  Loopback monitoring         MB  Mbuf monitoring
+    NH  Nexthop monitoring          NP  NPC monitoring              
+    SP  SPU monitoring              SM  Schedule monitoring
+    CF  Config Sync monitoring      RE  Relinquish monitoring
+ 
+Cluster ID: 1
+Node   Priority Status         Preempt Manual   Monitor-failures
+
+Redundancy group: 0 , Failover count: 1
+node0  100      primary        no      no       None           
+node1  10       secondary      no      no       None           
+
+Redundancy group: 1 , Failover count: 1
+node0  100      primary        yes     no       None           
+node1  10       secondary      yes     no       None           
+
+{primary:node0}
+
+
+Các link tham khảo
+1. Installing Software on SRX Series Devices
+https://www.juniper.net/documentation/us/en/software/junos/junos-install-upgrade/topics/topic-map/install-software-on-srx.html
+
+2. How to copy and paste a config from a text file on to the SRX firewall
+https://kb.juniper.net/InfoCenter/index?page=content&id=KB10817&cat=JUNOSV_FIREFLY&actp=LIST
+
+3. Loading Configuration Files
+https://www.juniper.net/documentation/us/en/software/junos/cli/topics/topic-map/junos-config-files-loading.html
+
+4. How to replace a hardware component on a SRX1400/3400/3600 series device in a chassis cluster
+https://kb.juniper.net/InfoCenter/index?page=content&id=KB22994&actp=METADATA
+
+5. RMA replacement of a node in a Chassis Cluster
+https://kb.juniper.net/InfoCenter/index?page=content&id=KB21134&actp=METADATA
+
+6. SRX Getting Started - Junos Software Installation/Upgrade
+https://kb.juniper.net/InfoCenter/index?page=content&id=KB16652&actp=METADATA
+
+7. Troubleshooting an SRX Chassis Cluster with One Node in the Primary State and the Other Node in the Lost State
+https://www.juniper.net/documentation/us/en/software/junos/chassis-cluster-security-devices/topics/task/srx-cluster-primary-lost-state-troubleshooting.html
+
+8. Troubleshooting a Fabric Link Failure in an SRX Chassis Cluster
+https://www.juniper.net/documentation/us/en/software/junos/chassis-cluster-security-devices/topics/task/srx-fabric-link-failure-troubleshooting.html
+
+9. Troubleshooting a Control Link Failure in an SRX Chassis Cluster
+https://www.juniper.net/documentation/us/en/software/junos/chassis-cluster-security-devices/topics/task/srx-control-link-failure-troubleshooting.html
+
+10. Reset Password root
+https://rtodto.net/srx-password-resetrecovery/

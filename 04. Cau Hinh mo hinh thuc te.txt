@@ -1,0 +1,93 @@
+Cấu hình mô hình mạng thực tế với thiết bị Juniper
+
+Tiếp tục với các bài viết cơ bản trên thiết bị Juniper, hôm nay an ninh mạng cấu hình mô hình thực tế với:
+
+– VLAN ở các tầng, định tuyến các VLAN với nhau
+
+– Cấu hình gộp 2 đường vật lý thành 1 logic để tăng băng thông và tốc độ, backup
+
+– Cấu hình Static route
+
+– DHCP Relay
+
+(tham khảo các bài viết cơ bản tại đây:)
+
+Tại Switch Ex Juniper Core
+
+Tạo VLAN, tất cả các Vlan phải được tạo tại Core
+
+set vlans Floor1 vlan-id 10
+
+set vlans Floor2 vlan-id 20
+
+set vlans Floor3 vlan-id 30
+
+Định nghĩa số group interface
+
+        set chassis aggregated-devices ethernet device-count 2
+
+Cấu hình group intercafe: (mỗi đường logic 802.3ad ae0 có 2 đường vật lý)
+
+Đường này kết nối từ switch EX tới Router để ra Internet
+
+delete interfaces ge-1/0/44
+
+delete interfaces ge-1/0/45
+
+set interfaces ge-1/0/44 ether-options 802.3ad ae0   // ae0 là đường logic
+
+set interfaces ge-1/0/45 ether-options 802.3ad ae0   // ae0 là đường logic
+
+Cấu hình group interface mode trunk
+
+set interfaces ae0 unit 0 family ethernet-switching port-mode trunk   // cho ae0 là trunk
+
+Gán IP cho group interface
+
+set interfaces ae0 unit 0 family inet address 172.17.0.2/30
+
+Gán interface trunk các VLAN
+
+set interfaces ae0 unit 0 family ethernet-switching vlan members all
+
+Tạo default-gateway để route đi internet
+
+set routing-options static route 0.0.0.0/0 next-hop 172.17.0.1 //STATIC ROUTE
+
+Gán interface VLAN làm gateway cho các VLAN
+
+set interfaces vlan unit 10 family inet address 172.16.10.1/24
+
+set interfaces vlan unit 11 family inet address 172.16.11.1/24
+
+set interfaces vlan unit 12 family inet address 172.16.12.1/24
+
+Cấu hình DHCP-Replay Agent
+
+set forwarding-options helpers bootp server 172.16.0.11
+
+// Ip server cấp DHCP
+
+set forwarding-options helpers bootp interface vlan.10
+
+//vlan cần cấp DHCP
+
+set forwarding-options helpers bootp interface vlan.20
+
+//vlan cần cấp DHCP
+
+set forwarding-options helpers bootp interface vlan.30
+
+//vlan cần cấp DHCP
+
+Cấu hình Inter-VLAN để route các VLAN thông với nhau
+
+set vlans Floor1 l3-interface vlan.10
+
+set vlans Floor2 l3-interface vlan.20
+
+set vlans Floor3 l3-interface vlan.30
+
+Lưu cấu hình vào thiết bị
+
+commit

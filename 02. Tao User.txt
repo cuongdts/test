@@ -1,0 +1,32 @@
+Tạo User trên Junos
+
+Các lệnh cơ bản trên hệ điều hành của Juniper
+Lần đăng nhập đầu tiên trên JunOS sẽ không hỏi password của tài khoản root. 
+Bạn phải tự thay mật khẩu cho tài khoản root sau khi đăng nhập nhằm tăng tính 
+bảo mật và tránh một số lỗi yêu cầu về quyền. Ví dụ khi dùng lệnh commit chẳn hạn:
+
+“’system’ Missing mandatory statement: ‘root-authentication’ error: commit failed: (missing statements).”
+
+Để thiết lập mật khẩu cho tài khoản Root, sau khi đăng nhập chúng ta chuyển qua Configuration mode và gõ lệnh:
+
+root# set system root-authentication plain-text-password
+
+Nhập và xác nhận lại password cho root user. Password sẽ ẩn khi chúng ta nhập vào
+New password:
+Retype new password
+
+Sau đó chúng ta dùng lệnh commit để lưu lại thay đổi.
+root# commit
+
+Ngoài tài khoản quản trị root, chúng ta cũng có thể tạo thêm các tài khoản quản trị khác bằng lệnh
+
+root# set system login user khanh class super-user authentication plain-text-password
+
+Trong dòng lệnh trên mình thực hiện thêm tài khoản mới là khanh, với quyền Full (tức ngang với root)
+Ngoài tài khoản quản trị (super-user) ra, chúng ta củng có thể tạo các tài khoản thuộc nhóm người dùng khác như:operator, read-only, unauthorized,…
+
+Để tìm hiểu về các lớp tài khoản và quyền hạn của chúng. Ta gõ lệnh:
+root# set system login user khanh class ?
+
+Để xem thông tin về các user account, ta dùng lệnh:
+root# show system login

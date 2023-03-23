@@ -1,0 +1,64 @@
+Các lệnh cơ bản trên hệ điều hành của Juniper
+
+CLI Modes:
+
+Khi đăng nhập vào thiết bị dưới quyền root. Chúng ta sẽ được chuyển tới chế độ dòng lệnh của Unix, 
+điều này không có gì lạ vì JUNOS OS của Juniper được build trên nền Unix (FreeBSD). 
+Ở lần đăng nhập đầu tiên với quyền root, chúng ta sẽ không được yêu cầu nhập password.
+
+Để chuyển qua JUNOS CLI, chúng ta đánh lệnh cli
+
+root% cli
+user@host>
+
+Trong JUNOS CLI chúng ta có hai chế độ:
+
+Operational mode: Chế độ này dùng để hiển thị trạng thái hiện tại của thiết bị. 
+Tại đây chúng ta có thể sử dụng các lệnh để thực hiện giám sát (monitor) hay giải 
+quyết sự cố (troubleshoot) về phần mềm JUNOS, thiết bị, kết nối mạng,…
+
+Configuration mode: Đây là chế độ cấu hình thiết bị. Tại đây chúng ta có thể thực 
+hiện các lệnh tác động lên những thuộc tính của phần mềm JUNOS như: Cấu hình interfaces, 
+general routing information, routing protocols, flow-based security features, user access, 
+và system/hardware properties
+
+Operational mode:
+Đây là mode đầu tiên trong JUNOS software, vói dấu nhắc lệnh là >. 
+Như đã nói ở trên, để chuyển từ Unix Shell sang chế độ này, chúng ta dùng lệnh cli.
+
+user@host>
+
+
+Configuration mode:
+
+Để chuyển từ operational mode sang configuration mode, tại dấu nhắc lệnh, ta gõ configure. 
+Lúc bấy giờ, dấu nhắc lệnh của chúng ta chuyển thành kí tự #. Và để thoát khỏi mode này, 
+chúng ta chỉ cần gõ lệnh exit.
+
+Một số lệnh trong Configuration mode:
+
+Các loại lệnh thường dùng trong Configuration mode:
+
+set: lệnh set dùng để thiết đặt một giá trị khi thực hiện một dòng lệnh cấu hình có sử dụng tham số.
+delete: lệnh delete dùng để xóa các tham số cấu hình.
+show: lệnh show dùng để hiển thị các thông tin cấu hình tại cấp cấu hình hiện tại.
+copy: lệnh copy dùng để sao chép mới hoặc ghi đè lên các thông số cấu hình hiện tại.
+rename: lệnh rename dùng để thiết đặt lại tên mới cho một cấu hình nào đó.( ví dụ như: interface, policy statements,…)
+
+Bên trên là các lệnh thường được sử dụng. Chúng ta có thể tham khảo danh sách đầy đủ của các lệnh trong Configuration mode tại đây.
+
+
+Một số phím tắt điều hướng khi gõ lệnh:
+
+Ctrl + b: Dịch chuyển con nháy lùi về một kí tự.
+Ctrl + a: Dịch chuyển con nháy về đầu dòng lệnh.
+Ctrl + f: Dịch chuyển con nháy tiến tới một kí tự.
+Ctrl + e: Dịch chuyển con nháy về cuối dòng lệnh.
+Danh sách các phím tắt đầy đủ chúng ta có thể xem tại đây.
+
+
+Help:
+Trong quá trình gõ lệnh, chúng ta có thể sử dụng phím Tab để dòng lệnh được tự động hoàn thiện. 
+Hoặc sử dụng dấu ? để liệt kê tất cả các lệnh có thể thao tác được ở cấp hiện tại.
+
+

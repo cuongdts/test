@@ -1,0 +1,63 @@
+Cấu hình đầu tiên trên thiết bị Juniper
+
+I. Cấu hình cơ bản:
+1.1 Cấu hình password root:
+
+set system root-authentication plain-text-password
+New password:xxxxxx
+Retype new password:xxxxxx
+
+
+1.2 Cấu hình hostname:
+
+set system host-name hcm-svuit-vsrx
+1.3 Cấu hình login banner:
+
+set system login message “Webcome to”
+
+
+1.4 Cấu hình timezone:
+
+set system time-zone GMT+7
+1.5 Cấu hình name-server:
+
+set system name-server 8.8.8.8
+set system name-server 4.2.2.2
+
+
+1.6 Tạo user quản trị:
+
+set system login user svuit uid 2000
+set system login user svuit class super-user
+set system login user svuit authentication plain-text-password
+New password:xxxxxx
+Retype new password:xxxxxx
+Lưu ý ở đây mình tạo user svuit có full quyền quản trị (tương đương với user root)
+
+II. Bật các dịch vụ:
+
+2.1 SSH, TELNET
+
+set system services ssh
+set system services telnet
+
+
+2.2 WEB MANAGEMENT
+
+Cấu hình chỉ cho truy cập vào web-management từ interface ge-0/0/1.0 (chỉ cho phép truy cập từ Inside)
+set system services web-management http interface ge-0/0/1.0
+set system services web-management https system-generated-certificate
+set system services web-management https interface ge-0/0/1.0
+set system services web-management session idle-timeout 60
+2.3 Cấu hình DHCP cho Client Inside:
+
+Cấu hình cho các Client trong Inside nhận DHCP từ Jupiter SRX
+set system services dhcp pool 10.1.1.0/24 address-range low 10.1.1.192 high 10.1.1.250
+set system services dhcp pool 10.1.1.0/24 name-server 8.8.8.8
+set system services dhcp pool 10.1.1.0/24 name-server 4.2.2.2
+set system services dhcp pool 10.1.1.0/24 router 10.1.1.1
+
+III. Cấu hình địa chỉ IP:
+
+set interfaces ge-0/0/1 unit 0 family inet address 10.1.1.1/24
+set interfaces ge-0/0/2 unit 0 family inet address 10.2.2.1/24
